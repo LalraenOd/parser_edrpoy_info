@@ -23,15 +23,15 @@ namespace parser_edrpoy_info
                 using (WebClient client = new WebClient())
                 {
                     client.Encoding = Encoding.UTF8; 
-                    Console.WriteLine("Getting EDRPOY's...");
-                    Regex regexEdrpoy = new Regex(pattern: "<a href=\"/ru/catalog/company_details/(?<result>.+)/\">");
-                    Regex regexEdrpoyCount = new Regex(pattern: "<span class=\"text-green\">(?<result>.+)</span> найденных</div>");
+                    Console.WriteLine("Getting EDRPOY's..."); 
+                    Regex regexEdrpoyCount = new Regex("</span> из <span class=\"text-green\">(?<result>\\d+)</span> найденных</div>");
                     string htmlSearch = client.DownloadString(linkSearch);
                     Match matchedrpoyCount = regexEdrpoyCount.Match(htmlSearch);
                     double pagesCount = matchedrpoyCount.Groups.Count / 10;
                     for (int page = 1; page < Math.Ceiling(pagesCount); page++)
                     {
                         string htmlPageSearch = client.DownloadString(linkSearch + "&page=" + page);
+                        Regex regexEdrpoy = new Regex(pattern: "<a href=\"/ru/catalog/company_details/(?<result>.+)/\">");
                         MatchCollection matchCollectionEdrpoy = regexEdrpoy.Matches(htmlPageSearch);
                         Console.WriteLine("Number of EDRPOY's on page {0}", matchCollectionEdrpoy.Count.ToString());
                         List<string> listEdrpoy = new List<string>();
