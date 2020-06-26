@@ -12,8 +12,8 @@ namespace parser_edrpoy_info
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Enter city: ");
-            string city = Console.ReadLine();
+            //Console.WriteLine("Enter city: ");
+            //string city = Console.ReadLine();
             while (true)
             {
                 Console.InputEncoding = Encoding.Default;
@@ -22,12 +22,12 @@ namespace parser_edrpoy_info
                 string linkSearch = Console.ReadLine();
                 using (WebClient client = new WebClient())
                 {
-                    client.Encoding = Encoding.UTF8; 
-                    Console.WriteLine("Getting EDRPOY's..."); 
+                    client.Encoding = Encoding.UTF8;
+                    Console.WriteLine("Getting EDRPOY's...");
                     Regex regexEdrpoyCount = new Regex("</span> из <span class=\"text-green\">(?<result>\\d+)</span> найденных</div>");
                     string htmlSearch = client.DownloadString(linkSearch);
-                    Match matchedrpoyCount = regexEdrpoyCount.Match(htmlSearch);
-                    double pagesCount = matchedrpoyCount.Groups.Count / 10;
+                    string matchedrpoyCount = regexEdrpoyCount.Match(htmlSearch).Groups[1].Value.ToString();
+                    double pagesCount = Int32.Parse(matchedrpoyCount)/ 20.0;
                     for (int page = 1; page < Math.Ceiling(pagesCount); page++)
                     {
                         string htmlPageSearch = client.DownloadString(linkSearch + "&page=" + page);
