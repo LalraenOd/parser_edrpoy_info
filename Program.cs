@@ -13,17 +13,18 @@ namespace parser_edrpoy_info
     {
         static void Main(string[] args)
         {
-            var sw = new Stopwatch();
-            Console.Write("Enter city: ");
-            string city = Console.ReadLine();
             Console.InputEncoding = Encoding.Default;
             Console.OutputEncoding = Encoding.Default;
+            var sw = new Stopwatch();
             List<string> listEdrpou = new List<string>();
+
+            Console.Write("Enter city: ");
+            string city = Console.ReadLine();
             Console.Write("Enter youcontrol link to parse:");
             string linkSearch = Console.ReadLine();
             Console.WriteLine();
             //Getting EDRPOU's list from youcontrol
-                sw.Start();
+            sw.Start();
             using (WebClient client = new WebClient())
             {
                 client.Encoding = Encoding.UTF8;
@@ -46,8 +47,23 @@ namespace parser_edrpoy_info
             }
             Console.WriteLine("Getting EDRPOU's list: DONE\n", Console.ForegroundColor = ConsoleColor.Green);
 
-            //Getting details from ttp://edr.data-gov-ua.org/api
+            //Getting details from http://edr.data-gov-ua.org/api
             Console.WriteLine("Getting details...", Console.ForegroundColor = ConsoleColor.Gray);
+            EdrpouDetailParser(listEdrpou, city);
+            sw.Stop();
+            TimeSpan elapsedTime = TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds);
+            Console.WriteLine("Done. Elapsed time: {0} seconds ", elapsedTime.ToString(), Console.ForegroundColor = ConsoleColor.Green);
+            Console.WriteLine("Press any key to exit...");
+            Console.ReadLine();
+        }
+
+        /// <summary>
+        /// Get's detail EDRPOU information from gttp://edr.data-gov-ua.org/api
+        /// </summary>
+        /// <param name="listEdrpou"> List of EDRPOU's to parse</param>
+        /// <param name="fileName">Output file name *.txt</param>
+        private static void EdrpouDetailParser(List<string> listEdrpou, string fileName)
+        {
             using (WebClient client = new WebClient())
             {
                 client.Encoding = Encoding.UTF8;
@@ -66,20 +82,13 @@ namespace parser_edrpoy_info
                     string resultOcc = matchOcc.Groups[1].Value;
                     string resultStatus = matchStatus.Groups[1].Value;
                     string result = (listItemCount + 1) + "\t" + edrpou + "\t" + resultName + "\t" + resultOcc + "\t" + resultStatus;
-                    File.AppendAllText(city + ".txt", result + "\n");
+                    File.AppendAllText(fileName + ".txt", result + "\n");
                     if (listItemCount % 5 == 0)
                     {
                         Console.WriteLine("Done {0} EDRPOU's.", listItemCount, Console.ForegroundColor = ConsoleColor.Yellow);
                     }
                 }
             }
-            sw.Stop();
-            Thread.Sleep(300);
-            File.Open(city + ".txt", FileMode.Open);
-            TimeSpan elapsedTime = TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds);
-            Console.WriteLine("Done. Elapsed time: {0} seconds ", elapsedTime.ToString(), Console.ForegroundColor = ConsoleColor.Green);
-            Console.WriteLine("Press any key to exit...");
-            Console.ReadLine();
         }
     }
 }
