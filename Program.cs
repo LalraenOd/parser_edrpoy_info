@@ -16,72 +16,70 @@ namespace parser_edrpoy_info
             var sw = new Stopwatch();
             Console.Write("Enter city: ");
             string city = Console.ReadLine();
-            while (true)
-            {
-                Console.InputEncoding = Encoding.Default;
-                Console.OutputEncoding = Encoding.Default;
-                List<string> listEdrpou = new List<string>();
-                Console.Write("Enter youcontrol link to parse:");
-                string linkSearch = Console.ReadLine();
-                Console.WriteLine();
-                //Getting EDRPOU's list from youcontrol
+            Console.InputEncoding = Encoding.Default;
+            Console.OutputEncoding = Encoding.Default;
+            List<string> listEdrpou = new List<string>();
+            Console.Write("Enter youcontrol link to parse:");
+            string linkSearch = Console.ReadLine();
+            Console.WriteLine();
+            //Getting EDRPOU's list from youcontrol
                 sw.Start();
-                using (WebClient client = new WebClient())
+            using (WebClient client = new WebClient())
+            {
+                client.Encoding = Encoding.UTF8;
+                Console.WriteLine("Getting EDRPOY's...");
+                Regex regexEdrpouCount = new Regex("</span> из <span class=\"text-green\">(?<result>\\d+)</span> найденных</div>");
+                string htmlSearch = client.DownloadString(linkSearch);
+                string matchedrpoyCount = regexEdrpouCount.Match(htmlSearch).Groups[1].Value.ToString();
+                double pagesCount = Int32.Parse(matchedrpoyCount) / 20.0;
+                for (int page = 1; page < Math.Ceiling(pagesCount) + 1; page++)
                 {
-                    client.Encoding = Encoding.UTF8;
-                    Console.WriteLine("Getting EDRPOY's...");
-                    Regex regexEdrpouCount = new Regex("</span> из <span class=\"text-green\">(?<result>\\d+)</span> найденных</div>");
-                    string htmlSearch = client.DownloadString(linkSearch);
-                    string matchedrpoyCount = regexEdrpouCount.Match(htmlSearch).Groups[1].Value.ToString();
-                    double pagesCount = Int32.Parse(matchedrpoyCount)/ 20.0;
-                    for (int page = 1; page < Math.Ceiling(pagesCount) + 1; page++)
+                    string htmlPageSearch = client.DownloadString(linkSearch + "&page=" + page);
+                    Regex regexEdrpoy = new Regex(pattern: "<a href=\"/ru/catalog/company_details/(?<result>.+)/\">");
+                    MatchCollection matchCollectionEdrpoy = regexEdrpoy.Matches(htmlPageSearch);
+                    Console.WriteLine("Found {0} EDRPOU's on page {1}", matchCollectionEdrpoy.Count.ToString(), page);
+                    for (int matchCollectionCount = 0; matchCollectionCount < matchCollectionEdrpoy.Count - 1; matchCollectionCount++)
                     {
-                        string htmlPageSearch = client.DownloadString(linkSearch + "&page=" + page);
-                        Regex regexEdrpoy = new Regex(pattern: "<a href=\"/ru/catalog/company_details/(?<result>.+)/\">");
-                        MatchCollection matchCollectionEdrpoy = regexEdrpoy.Matches(htmlPageSearch);
-                        Console.WriteLine("Found {0} EDRPOU's on page {1}", matchCollectionEdrpoy.Count.ToString(), page);
-                        for (int matchCollectionCount = 0; matchCollectionCount < matchCollectionEdrpoy.Count - 1; matchCollectionCount++)
-                        {
-                            listEdrpou.Add(matchCollectionEdrpoy[matchCollectionCount].Groups["result"].Value.ToString());
-                        } 
+                        listEdrpou.Add(matchCollectionEdrpoy[matchCollectionCount].Groups["result"].Value.ToString());
                     }
                 }
-                Console.WriteLine("Getting EDRPOU's list: DONE", Console.ForegroundColor = ConsoleColor.Green);
-                Console.WriteLine("Total EDRPOU's found: {0}", listEdrpou.Count, Console.ForegroundColor = ConsoleColor.Gray);
-                //Getting details from ttp://edr.data-gov-ua.org/api
-                using (WebClient client = new WebClient())
-                {
-                    client.Encoding = Encoding.UTF8;
-                    for (int listItemCount = 0; listItemCount < listEdrpou.Count - 1; listItemCount++)
-                    {
-                        var edrpou = listEdrpou[listItemCount];
-                        var linkEdrpou = "http://edr.data-gov-ua.org/api/companies?where={\"edrpou\":{\"contains\":\""+ edrpou +"\"}}";
-                        string pageEdrpou = client.DownloadString(linkEdrpou);
-                        Regex regexOfName = new Regex("\"officialName\":(?<result>.+)\",\"address");
-                        Regex regexOccupation = new Regex("\"occupation\":\"(?<result>.+)\",\"status");
-                        Regex regexStatus = new Regex("\"status\":\"(?<result>.+)\",\"id");
-                        Match matchName = regexOfName.Match(pageEdrpou);
-                        Match matchOcc = regexOccupation.Match(pageEdrpou);
-                        Match matchStatus = regexStatus.Match(pageEdrpou);
-                        string resultName = matchName.Groups[1].Value;
-                        string resultOcc = matchOcc.Groups[1].Value;
-                        string resultStatus = matchStatus.Groups[1].Value;
-                        string result = (listItemCount + 1) + "\t" + edrpou + "\t" + resultName + "\t" + resultOcc + "\t" + resultStatus;
-                        //Console.WriteLine(result);
-                        File.AppendAllText(city + ".txt", result + "\n");
-                        if (listItemCount % 5 == 0)
-                        {
-                            Console.WriteLine("Done {0} EDRPOU's.", listItemCount, Console.ForegroundColor = ConsoleColor.Yellow);
-                        }
-                    }
-                }
-                sw.Stop();
-                Thread.Sleep(300);
-                File.Open(city + ".txt", FileMode.Open);
-                Console.WriteLine("Done. Elapsed time: {0}", (sw.ElapsedMilliseconds/100.0).ToString(), Console.ForegroundColor = ConsoleColor.Green);
-                Console.WriteLine("Press any key to exit...");
-                Console.ReadLine();
             }
+            Console.WriteLine("Getting EDRPOU's list: DONE\n", Console.ForegroundColor = ConsoleColor.Green);
+
+            //Getting details from ttp://edr.data-gov-ua.org/api
+            Console.WriteLine("Getting details...", Console.ForegroundColor = ConsoleColor.Gray);
+            using (WebClient client = new WebClient())
+            {
+                client.Encoding = Encoding.UTF8;
+                for (int listItemCount = 0; listItemCount < listEdrpou.Count - 1; listItemCount++)
+                {
+                    var edrpou = listEdrpou[listItemCount];
+                    var linkEdrpou = "http://edr.data-gov-ua.org/api/companies?where={\"edrpou\":{\"contains\":\"" + edrpou + "\"}}";
+                    string pageEdrpou = client.DownloadString(linkEdrpou);
+                    Regex regexOfName = new Regex("\"officialName\":(?<result>.+)\",\"address");
+                    Regex regexOccupation = new Regex("\"occupation\":\"(?<result>.+)\",\"status");
+                    Regex regexStatus = new Regex("\"status\":\"(?<result>.+)\",\"id");
+                    Match matchName = regexOfName.Match(pageEdrpou);
+                    Match matchOcc = regexOccupation.Match(pageEdrpou);
+                    Match matchStatus = regexStatus.Match(pageEdrpou);
+                    string resultName = matchName.Groups[1].Value;
+                    string resultOcc = matchOcc.Groups[1].Value;
+                    string resultStatus = matchStatus.Groups[1].Value;
+                    string result = (listItemCount + 1) + "\t" + edrpou + "\t" + resultName + "\t" + resultOcc + "\t" + resultStatus;
+                    File.AppendAllText(city + ".txt", result + "\n");
+                    if (listItemCount % 5 == 0)
+                    {
+                        Console.WriteLine("Done {0} EDRPOU's.", listItemCount, Console.ForegroundColor = ConsoleColor.Yellow);
+                    }
+                }
+            }
+            sw.Stop();
+            Thread.Sleep(300);
+            File.Open(city + ".txt", FileMode.Open);
+            TimeSpan elapsedTime = TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds);
+            Console.WriteLine("Done. Elapsed time: {0} seconds ", elapsedTime.ToString(), Console.ForegroundColor = ConsoleColor.Green);
+            Console.WriteLine("Press any key to exit...");
+            Console.ReadLine();
         }
     }
 }
