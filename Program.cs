@@ -54,7 +54,7 @@ namespace parser_edrpoy_info
                 sw.Stop();
                 TimeSpan elapsedTime = TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds);
                 Console.WriteLine("Done. Elapsed time: {0} seconds ", elapsedTime.ToString(), Console.ForegroundColor = ConsoleColor.Green);
-                File.AppendAllText("debugInfo.txt", "EDRPOU count: " + listEdrpou.Count + ".\n Time Elapsed: " + elapsedTime.ToString() + "\n");
+                File.AppendAllText("debugInfo.txt", "EDRPOU count: " + listEdrpou.Count + ".\nTime Elapsed: " + elapsedTime.ToString() + "\n");
                 Console.WriteLine("Press any key to exit...");
                 Console.ReadKey();
             }
